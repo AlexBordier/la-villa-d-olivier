@@ -26,6 +26,19 @@ export default function VoteModal({ isOpen, onClose, onVote, existingVote, isVot
     }
   }, [existingVote, isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      // On ne change rien si le body est déjà lock (par la modal de détails)
+      // mais on assure le lock au cas où.
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        // Si la modal de détails est toujours là, on garde le lock
+        // Sinon on remet à prevOverflow
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const ratings = [
