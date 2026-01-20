@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vacances entre Amis",
+  title: "La Villa d'Olivier",
   description: "Plateforme collaborative de choix de vacances",
 };
 

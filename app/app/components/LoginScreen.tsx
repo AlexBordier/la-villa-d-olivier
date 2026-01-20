@@ -42,7 +42,7 @@ export default function LoginScreen() {
         </div>
 
         <p className="mt-24 text-center text-zinc-300 font-black text-[9px] uppercase tracking-[0.6em]">
-          Projet Vacances entre Amis — 2026
+          La Villa d&apos;Olivier — 2026
         </p>
       </div>
     </div>

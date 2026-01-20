@@ -18,7 +18,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏡</span>
-            <h1 className="text-lg font-black text-zinc-900 tracking-tighter hidden xs:block">La Villa d&apos;Olivier</h1>
+            <h1 className="text-lg font-black text-zinc-900 tracking-tighter">La Villa d&apos;Olivier</h1>
           </div>
           
           <div className="flex items-center gap-4">
