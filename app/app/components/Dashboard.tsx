@@ -9,6 +9,7 @@ import { LayoutGrid, Map as MapIcon, Plus, Home } from 'lucide-react';
 import AddHouseModal from './AddHouseModal';
 import HouseDetailsModal from './HouseDetailsModal';
 import TopHouses from './TopHouses';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 const MapComponent = dynamic(() => import('./MapComponent'), { 
   ssr: false,
@@ -16,6 +17,10 @@ const MapComponent = dynamic(() => import('./MapComponent'), {
 });
 
 export default function Dashboard() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  
   const [houses, setHouses] = useState<HouseWithVotes[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +37,14 @@ export default function Dashboard() {
         return { ...h, votes, avg_rating: votes.length > 0 ? totalRating / votes.length : 0, vote_count: votes.length } as HouseWithVotes;
       });
       setHouses(formattedHouses);
+      
+      // Gérer la sélection initiale via URL
+      const houseIdFromUrl = searchParams.get('house');
+      if (houseIdFromUrl) {
+        const houseToSelect = formattedHouses.find(h => h.id === houseIdFromUrl);
+        if (houseToSelect) setSelectedHouse(houseToSelect);
+      }
+
       if (selectedHouse) {
           const updatedSelected = formattedHouses.find(h => h.id === selectedHouse.id);
           if (updatedSelected) setSelectedHouse(updatedSelected);
@@ -41,21 +54,38 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedHouse]);
+  }, [selectedHouse, searchParams]);
 
   useEffect(() => {
     fetchHouses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Mettre à jour l'URL quand la sélection change
+  const handleSelectHouse = (house: HouseWithVotes | null) => {
+    setSelectedHouse(house);
+    const params = new URLSearchParams(searchParams);
+    if (house) {
+      params.set('house', house.id);
+    } else {
+      params.delete('house');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <div className="space-y-20 pb-32">
       <AddHouseModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSuccess={fetchHouses} />
-      <HouseDetailsModal house={selectedHouse} isOpen={!!selectedHouse} onClose={() => setSelectedHouse(null)} onUpdate={fetchHouses} />
+      <HouseDetailsModal 
+        house={selectedHouse} 
+        isOpen={!!selectedHouse} 
+        onClose={() => handleSelectHouse(null)} 
+        onUpdate={fetchHouses} 
+      />
 
       {/* Podium - Toujours en haut en mode liste */}
       {!isLoading && houses.length > 0 && viewMode === 'list' && (
-        <TopHouses houses={houses} onHouseClick={setSelectedHouse} />
+        <TopHouses houses={houses} onHouseClick={handleSelectHouse} />
       )}
 
       {/* Header Dashboard Unified */}
@@ -106,7 +136,7 @@ export default function Dashboard() {
           {viewMode === 'list' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
               {houses.length > 0 ? (
-                houses.map((house) => <HouseCard key={house.id} house={house} onClick={() => setSelectedHouse(house)} />)
+                houses.map((house) => <HouseCard key={house.id} house={house} onClick={() => handleSelectHouse(house)} />)
               ) : (
                 <div className="col-span-full py-40 flex flex-col items-center border-4 border-dashed border-zinc-100 rounded-[60px] bg-zinc-50/50">
                    <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center text-4xl mb-8">🏝️</div>
@@ -116,7 +146,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="h-[80vh] w-full rounded-[60px] overflow-hidden border border-zinc-100 shadow-2xl relative shadow-zinc-200">
-               <MapComponent houses={houses} onMarkerClick={(h) => setSelectedHouse(h)} />
+               <MapComponent houses={houses} onMarkerClick={handleSelectHouse} />
             </div>
           )}
         </>
