@@ -1,55 +1,59 @@
 # 🏡 La Villa d'Olivier
 
-Plateforme collaborative pour organiser des vacances entre amis (groupe de 11 personnes). Permet de centraliser des propositions de maisons, de les visualiser sur une carte et de voter collectivement.
+Plateforme collaborative haut de gamme pour l'organisation de vacances en groupe. Conçue pour simplifier le choix, la visualisation et le vote des maisons de vacances.
 
-## 🚀 Fonctionnalités
+## 🌟 Points Forts du Produit
 
-- **Authentification simplifiée** : Pas de mot de passe, choix du membre via une interface dédiée.
-- **Tableau de Bord** : 
-  - **Podium** : Mise en avant automatique des 3 maisons les mieux notées.
-  - **Vue Liste** : Grille contrastée des propositions avec détails rapides.
-  - **Vue Carte** : Géolocalisation interactive via Leaflet.
-- **Gestion des Maisons** :
-  - Ajout avec **Google Places Autocomplete** pour des adresses précises.
-  - Upload d'images direct avec support du format **HEIC/AVIF/PNG/JPG**.
-  - Édition complète et suppression sécurisée.
-- **Système de Vote** : Notation sur 4 niveaux avec commentaires détaillés des membres.
+- **UI Premium** : Design minimaliste, contrasté et aéré inspiré des standards modernes.
+- **Podium Dynamique** : Mise en avant automatique du Top 3 des villas selon les votes du groupe.
+- **Expérience Mobile First** : Entièrement responsive, optimisé pour la saisie et la consultation sur smartphone.
+- **Intelligence Géographique** : Autocomplete Google Places pour des adresses précises et un placement automatique sur carte.
+- **Gestion d'Images Avancée** : Support natif du format HEIC (iPhone), AVIF, WebP, PNG et JPG avec conversion automatique.
 
-## 🛠 Tech Stack
+## 🛠 Architecture Technique
 
-- **Frontend** : Next.js 15+ (App Router), Tailwind CSS, Lucide React.
-- **Backend/Base de données** : Supabase (PostgreSQL).
-- **Stockage** : Supabase Storage (Bucket public `vacances`).
-- **Cartographie** : React Leaflet & Google Places API.
-- **Déploiement** : Vercel.
+- **Frontend** : Next.js 15 (App Router)
+- **Langage** : TypeScript (Typage strict pour la maintenance)
+- **Style** : Tailwind CSS (Système de design Zinc/Indigo)
+- **Base de données** : Supabase (PostgreSQL)
+- **Stockage** : Supabase Storage (Bucket `vacances` avec RLS ouvertes)
+- **Cartographie** : Leaflet & Google Maps API
+- **Déploiement** : Vercel (CI/CD)
 
-## 📖 Installation & Maintenance
+## 📁 Structure du Projet
 
-### Pré-requis
-- Node.js & npm.
-- Un projet Supabase avec les tables `app_users`, `houses`, `votes`.
-- Une clé API Google Cloud (Places API activée).
+```text
+├── app/                  # Application Next.js
+│   ├── app/              # Routes et Pages
+│   │   ├── components/   # Composants UI (Dashboard, Modales, Map)
+│   │   ├── context/      # Gestion de l'état utilisateur
+│   │   └── lib/          # Client Supabase
+│   └── lib/              # Types TypeScript partagés
+├── supabase/             # Configuration Backend
+│   └── migrations/       # Historique de la structure DB & Storage
+└── README.md             # Documentation principale
+```
 
-### Configuration locale
-Créez un fichier `app/.env.local` :
+## 🔧 Maintenance & Déploiement
+
+### Variables d'environnement nécessaires
 ```env
-NEXT_PUBLIC_SUPABASE_URL=votre_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_cle_anon
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=votre_cle_google
+NEXT_PUBLIC_SUPABASE_URL=      # URL API Supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY= # Clé publique Supabase
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY= # Clé Google Cloud (Places + Maps)
 ```
 
-### Déploiement
-Le projet est configuré pour un déploiement automatique sur Vercel.
-Pour un déploiement manuel via la CLI :
-```bash
-npx vercel --prod
-```
+### Commandes utiles
+- `npm run dev` : Lancer le développement local.
+- `npm run build` : Vérifier la compilation production.
+- `npx vercel --prod` : Déployer manuellement sur Vercel.
+- `npx supabase db push` : Synchroniser la structure de la base de données.
 
-### Base de données (Supabase CLI)
-Pour synchroniser la structure :
-```bash
-npx supabase db push
-```
+## 🔐 Sécurité & RLS
+Le projet utilise des politiques de sécurité (Row Level Security) sur Supabase pour :
+1.  Permettre la lecture publique des maisons et des votes.
+2.  Permettre l'upload d'images dans le bucket `vacances`.
+3.  Permettre l'ajout et la modification des données par les membres du groupe.
 
 ---
-*Projet stabilisé et finalisé en Janvier 2026.*
+*Développé avec précision pour une expérience utilisateur sans faille.*

@@ -1,11 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useUser } from '../context/UserContext';
-import { X, Upload, Link as LinkIcon, MapPin, Sparkles } from 'lucide-react';
-import Autocomplete from 'react-google-autocomplete';
-import heic2any from 'heic2any';
+import { X, Upload, Link as LinkIcon, MapPin } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const GoogleAutocomplete = dynamic(() => import('./GoogleAutocomplete'), { 
+  ssr: false,
+  loading: () => <div className="w-full h-14 bg-zinc-50 rounded-[20px] animate-pulse" />
+});
 
 interface AddHouseModalProps {
   isOpen: boolean;
@@ -19,12 +23,17 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess }: AddHouseMo
   const [isConverting, setIsConverting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   
   const initialFormData = {
     title: '', address: '', link: '', image_url: '', price: '', bedrooms: '', beds: '', distance_sea_min: '', has_pool: false, has_jacuzzi: false, has_bbq: false, details: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -41,14 +50,34 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess }: AddHouseMo
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic')) {
       setIsConverting(true);
       try {
-        const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
-        const convertedFile = new File([Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+        // Importation dynamique de heic2any pour éviter l'erreur window au build
+        const heic2any = (await import('heic2any')).default;
+        
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.8
+        });
+        
+        const convertedFile = new File(
+          [Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob], 
+          file.name.replace(/\.[^/.]+$/, "") + ".jpg", 
+          { type: 'image/jpeg' }
+        );
         setImageFile(convertedFile);
-      } catch (err) { alert("Erreur conversion HEIC"); } finally { setIsConverting(false); }
-    } else { setImageFile(file); }
+      } catch (err) {
+        console.error("Erreur conversion HEIC:", err);
+        alert("Impossible de convertir l'image HEIC.");
+      } finally {
+        setIsConverting(false);
+      }
+    } else {
+      setImageFile(file);
+    }
   };
 
   const handleFileUpload = async (file: File): Promise<string | null> => {
@@ -56,11 +85,23 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess }: AddHouseMo
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `house-images/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from('vacances').upload(filePath, file, { contentType: file.type || 'image/jpeg', cacheControl: '3600', upsert: false });
+      
+      const { error: uploadError } = await supabase.storage
+        .from('vacances')
+        .upload(filePath, file, {
+          contentType: file.type || 'image/jpeg',
+          cacheControl: '3600',
+          upsert: false
+        });
+
       if (uploadError) throw uploadError;
+
       const { data } = supabase.storage.from('vacances').getPublicUrl(filePath);
       return data.publicUrl;
-    } catch (err: any) { alert("Erreur upload"); return null; }
+    } catch (err: any) {
+      alert("Erreur upload");
+      return null;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,7 +151,13 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess }: AddHouseMo
               <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">L&apos;essentiel</label>
               <input required placeholder="Nom de la villa..." value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full text-xl font-black border-none bg-zinc-50 rounded-[20px] px-6 py-5 focus:ring-2 focus:ring-indigo-500 transition-all outline-none" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Autocomplete apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY} onPlaceSelected={(place) => { if (place.geometry?.location) { setFormData(prev => ({ ...prev, address: place.formatted_address || '' })); setCoords({ lat: place.geometry.location.lat(), lng: place.geometry.location.lng() }); } }} options={{ types: ['address'], componentRestrictions: { country: 'fr' } }} className="w-full px-6 py-5 bg-zinc-50 rounded-[20px] text-sm font-bold border-none focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Adresse complète..." />
+                {isMounted && (
+                  <GoogleAutocomplete 
+                    onPlaceSelected={(place) => { if (place.geometry?.location) { setFormData(prev => ({ ...prev, address: place.formatted_address || '' })); setCoords({ lat: place.geometry.location.lat(), lng: place.geometry.location.lng() }); } }} 
+                    className="w-full px-6 py-5 bg-zinc-50 rounded-[20px] text-sm font-bold border-none focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    placeholder="Adresse complète..." 
+                  />
+                )}
                 <input placeholder="Lien de l'annonce..." value={formData.link} onChange={(e) => setFormData({...formData, link: e.target.value})} className="w-full px-6 py-5 bg-zinc-50 rounded-[20px] text-sm font-bold border-none focus:ring-2 focus:ring-indigo-500 outline-none" />
               </div>
             </div>
