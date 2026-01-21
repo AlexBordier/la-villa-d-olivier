@@ -26,6 +26,7 @@ export type House = {
   cons: string | null;
   other_equip: string | null;
   details: string | null;
+  other_amenities: string | null;
 };
 
 export type Vote = {
