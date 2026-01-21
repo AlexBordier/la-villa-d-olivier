@@ -6,7 +6,7 @@ import { useUser } from '../context/UserContext';
 import { X, Upload, Link as LinkIcon, MapPin, Sparkles, Wand2, PenLine, ArrowLeft, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import heic2any from 'heic2any';
-import { scrapeUrl } from '../../actions/scrape-url';
+import { scrapeUrl } from '../actions/scrape-url';
 
 const GoogleAutocomplete = dynamic(() => import('./GoogleAutocomplete'), { 
   ssr: false,
@@ -253,7 +253,7 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess }: AddHouseMo
                     onPlaceSelected={(place) => { if (place.geometry?.location) { setFormData(prev => ({ ...prev, address: place.formatted_address || '' })); setCoords({ lat: place.geometry.location.lat(), lng: place.geometry.location.lng() }); } }} 
                     className="w-full px-6 py-5 bg-zinc-50 rounded-[20px] text-sm font-bold border-none focus:ring-2 focus:ring-indigo-500 outline-none" 
                     placeholder="Adresse complète..."
-                    initialValue={formData.address}
+                    defaultValue={formData.address}
                   />
                 )}
                 <input placeholder="Lien de l'annonce..." value={formData.link} onChange={(e) => setFormData({...formData, link: e.target.value})} className="w-full px-6 py-5 bg-zinc-50 rounded-[20px] text-sm font-bold border-none focus:ring-2 focus:ring-indigo-500 outline-none" />
